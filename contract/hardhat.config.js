@@ -9,7 +9,15 @@ const ALCHEMY_API_KEY = "aIoa2uPd0Oquq-6_4xzUtdGT6SfCw0nd";
 const ROPSTEN_PRIVATE_KEY = "Your private key";
 
 module.exports = {
-  solidity: "0.8.18",
+  // solidity: "0.8.18",
+
+  solidity: {
+    compilers: [    //可指定多个sol版本
+        {version: "0.8.18"},
+        {version: "0.5.16"}
+    ]
+  },
+
   networks: {
     // goerli: {
     //   url: `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
