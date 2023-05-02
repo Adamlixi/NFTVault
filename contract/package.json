@@ -19,5 +19,8 @@
   "directories": {
     "test": "test"
   },
-  "keywords": []
+  "keywords": [],
+  "dependencies": {
+    "truffle-flattener": "^1.6.0"
+  }
 }

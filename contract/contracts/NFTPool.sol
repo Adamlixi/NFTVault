@@ -59,7 +59,7 @@ contract NFTPool is INFTPool {
         );
     }
 
-    function transferIntoNFT(address nft, uint256 tokenId) external override {
+    function transferIntoNFT(address nft, uint256 tokenId) external lock override {
         require(nft != address(0), "transfer to the zero NFT address");
         uint256 nftCount = IERC20(token).balanceOf(address(this));
         uint256 transferCount = nftCount - totalSupply;
@@ -91,6 +91,7 @@ contract NFTPool is INFTPool {
         require(IERC721(nft).supportsInterface(0x80ac58cd), "not ERC721");
         require(IERC721(nft).ownerOf(tokenId) == address(this), "not owner");
         require(nftAccout[nft][tokenId] >= amount, "not enough");
+        require(block.timestamp < timeReturn, "time error");
         _safeTransfer(token, to, amount);
         nftAccout[nft][tokenId] -= amount;
         nftRedeemAccount[nft][tokenId] = amount;
@@ -102,6 +103,7 @@ contract NFTPool is INFTPool {
     function redeemNFT(address nft, uint256 tokenId, address to) external lock override {
         require(msg.sender == bank, "not bank");
         require(nft != address(0), "transfer to the zero NFT address");
+        require(nftState[nft][tokenId] > block.timestamp, "time error");
         require(IERC721(nft).supportsInterface(0x80ac58cd), "not ERC721");
         require(IERC721(nft).ownerOf(tokenId) == address(this), "not nft owner");
         require(nftOwner[nft][tokenId] == to, "not old owner")
@@ -114,5 +116,9 @@ contract NFTPool is INFTPool {
         nftRedeemAccount[nft][tokenId] = 0;
         totalSupply = IERC20(token).balanceOf(address(this));
         nftState[nft][tokenId] = 0;
+    }
+
+    function GetTokenAddress() external view override returns (address) {
+        return token;
     }
 }

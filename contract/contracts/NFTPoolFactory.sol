@@ -32,6 +32,10 @@ contract NFTPoolFactory is INFTPoolFactory {
         return allPools.length;
     }
 
+    function getPoolByToken(address token) external view returns (address) {
+        return getPool[token];
+    }
+
     /**
      *
      * @param token Token

@@ -8,6 +8,7 @@ interface INFTPool {
     function GetNFTMortgageInfo(address nft, uint256 tokenId) external view returns (uint256);
     function CheckLiquidateNFTPrice(address nft, uint256 tokenId) external view returns (uint256);
     function CheckNFTStatus(address nft, uint256 tokenId) external view returns (int112);
+    function GetTokenAddress() external view returns (address);
     function mortgageNFT(address nft, uint256 tokenId, uint256 amount, address to, uint256 timeReturn) external;
     function redeemNFT(address nft, uint256 tokenId, address to) external;
 }
