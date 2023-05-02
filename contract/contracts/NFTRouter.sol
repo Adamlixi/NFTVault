@@ -1,13 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-import './libraries/TransferHelper.sol';
 import './interface/INFTRouter.sol';
 import './interface/IERC20.sol';
 import './interface/INFTPool.sol';
 import './interface/IERC721.sol';
 import './interface/INFTPoolFactory.sol';
-
+import './libraries/TransferHelper.sol';
 
 contract NFTRouter is INFTRouter {
     address public factory; //工厂地址
@@ -17,9 +16,9 @@ contract NFTRouter is INFTRouter {
         address tokenPool = nftAddress[nft][tokenId];
         require(tokenPool != address(0), "NFTRouter: NFT_POOL_NOT_CREATED");
         require(IERC721(nft).ownerOf(tokenId) == msg.sender, "NFTRouter: NOT_OWNER");
-        address token = INFTPool(tokenPool).GetTokenAddress()
+        address token = INFTPool(tokenPool).GetTokenAddress();
         require(token != address(0), "NFTRouter: NOT_REGISTER_POOL");
-        TransferHelper(token).safeTransferFrom(msg.sender, tokenPool, account);
+        TransferHelper.safeTransferFrom(token, msg.sender, tokenPool, account);
         INFTPool(tokenPool).transferIntoNFT(nft, tokenId);
     }
 
@@ -50,9 +49,9 @@ contract NFTRouter is INFTRouter {
         address tokenPool = nftAddress[nft][tokenId];
         require(tokenPool != address(0), "NFTRouter: NOT_REGISTER_NFT");
         require(IERC721(nft).ownerOf(tokenId) == tokenPool, "NFTRouter: NOT_OWNER");
-        address token = INFTPool(tokenPool).GetTokenAddress()
+        address token = INFTPool(tokenPool).GetTokenAddress();
         require(token != address(0), "NFTRouter: NOT_REGISTER_POOL");
-        TransferHelper(token).safeTransferFrom(token, msg.sender, tokenPool, amount);
+        TransferHelper.safeTransferFrom(token, msg.sender, tokenPool, amount);
         INFTPool(tokenPool).redeemNFT(nft, tokenId, msg.sender);
     }
 

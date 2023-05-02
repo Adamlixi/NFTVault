@@ -8,6 +8,7 @@ import './NFTPool.sol';
 contract NFTPoolFactory is INFTPoolFactory {
     address public feeTo; //收税地址
     address public feeToSetter; //收税权限控制地址
+    address public router; //路由地址
     //Pool映射,地址=>地址
     mapping(address => address) public getPool;
     //所有配对数组
@@ -21,8 +22,9 @@ contract NFTPoolFactory is INFTPoolFactory {
      * @dev 构造函数
      * @param _feeToSetter 收税开关权限控制
      */
-    constructor(address _feeToSetter) {
+    constructor(address _feeToSetter, address _router) {
         feeToSetter = _feeToSetter;
+        router = _router;
     }
 
     /**
@@ -54,7 +56,7 @@ contract NFTPoolFactory is INFTPoolFactory {
             pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         //调用pair地址的合约中的"initialize"方法,传入变量token0,token1
-        NFTPool(pool).initialize(token);
+        NFTPool(pool).initialize(token, router);
         //配对映射中设置token = pair
         getPool[token] = pool;
         //配对数组中推入pool地址
