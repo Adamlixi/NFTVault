@@ -64,7 +64,7 @@ contract NFTPool is INFTPool {
         require(nft != address(0), "transfer to the zero NFT address");
         uint256 nftCount = IERC20(token).balanceOf(address(this));
         uint256 transferCount = nftCount - totalSupply;
-        require(transferCount > 0 , "transfer count < 0.");
+        require(transferCount > 0 , "transfer count <= 0.");
         nftAccout[nft][tokenId] += transferCount;
         totalSupply = nftCount;
     }
@@ -74,15 +74,15 @@ contract NFTPool is INFTPool {
         nftAccout[nft][tokenId] = 0;
     }
 
-    function GetNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
+    function getNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
         return nftRedeemAccount[nft][tokenId];
     }
 
-    function CheckLiquidateNFTPrice(address nft, uint256 tokenId) external view override returns (uint256) {
+    function checkLiquidateNFTPrice(address nft, uint256 tokenId) external view override returns (uint256) {
         return nftAccout[nft][tokenId];
     }
     
-    function CheckNFTStatus(address nft, uint256 tokenId) external view override returns (int) {
+    function checkNFTStatus(address nft, uint256 tokenId) external view override returns (int) {
         return nftState[nft][tokenId];
     }
 
@@ -108,18 +108,20 @@ contract NFTPool is INFTPool {
         require(IERC721(nft).supportsInterface(0x80ac58cd), "not ERC721");
         require(IERC721(nft).ownerOf(tokenId) == address(this), "not nft owner");
         require(nftOwner[nft][tokenId] == to, "not old owner");
-        uint256 transferIn = totalSupply - IERC20(token).balanceOf(address(this));
+        uint256 transferIn = IERC20(token).balanceOf(address(this)) - totalSupply;
         require(transferIn > nftRedeemAccount[nft][tokenId] , "not enough");
         IERC721(nft).safeTransferFrom(address(this), to, tokenId);
         if(transferIn > nftRedeemAccount[nft][tokenId]){
             _safeTransfer(token, to, transferIn - nftRedeemAccount[nft][tokenId]);
         }
+        nftAccout[nft][tokenId] += nftRedeemAccount[nft][tokenId];
         nftRedeemAccount[nft][tokenId] = 0;
-        totalSupply = IERC20(token).balanceOf(address(this));
         nftState[nft][tokenId] = 0;
+        nftOwner[nft][tokenId] = address(0);
+        totalSupply = IERC20(token).balanceOf(address(this));
     }
 
-    function GetTokenAddress() external view override returns (address) {
+    function getTokenAddress() external view override returns (address) {
         return token;
     }
 }

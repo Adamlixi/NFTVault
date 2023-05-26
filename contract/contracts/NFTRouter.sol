@@ -16,7 +16,7 @@ contract NFTRouter is INFTRouter {
         address tokenPool = nftAddress[nft][tokenId];
         require(tokenPool != address(0), "NFTRouter: NFT_POOL_NOT_CREATED");
         require(IERC721(nft).ownerOf(tokenId) == msg.sender, "NFTRouter: NOT_OWNER");
-        address token = INFTPool(tokenPool).GetTokenAddress();
+        address token = INFTPool(tokenPool).getTokenAddress();
         require(token != address(0), "NFTRouter: NOT_REGISTER_POOL");
         TransferHelper.safeTransferFrom(token, msg.sender, tokenPool, account);
         INFTPool(tokenPool).transferIntoNFT(nft, tokenId);
@@ -31,10 +31,10 @@ contract NFTRouter is INFTRouter {
         nftAddress[nft][tokenId] = token;
     }
 
-    function GetNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
+    function getNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
         address tokenPool = nftAddress[nft][tokenId];
         require(tokenPool != address(0), "NFTRouter: NOT_REGISTER_POOL");
-        return INFTPool(tokenPool).GetNFTMortgageInfo(nft, tokenId);
+        return INFTPool(tokenPool).getNFTMortgageInfo(nft, tokenId);
     }
 
     function mortgageNFT(address nft, uint256 tokenId, uint256 amount, uint256 timeReturn) external override {
@@ -49,13 +49,13 @@ contract NFTRouter is INFTRouter {
         address tokenPool = nftAddress[nft][tokenId];
         require(tokenPool != address(0), "NFTRouter: NOT_REGISTER_NFT");
         require(IERC721(nft).ownerOf(tokenId) == tokenPool, "NFTRouter: NOT_OWNER");
-        address token = INFTPool(tokenPool).GetTokenAddress();
+        address token = INFTPool(tokenPool).getTokenAddress();
         require(token != address(0), "NFTRouter: NOT_REGISTER_POOL");
         TransferHelper.safeTransferFrom(token, msg.sender, tokenPool, amount);
         INFTPool(tokenPool).redeemNFT(nft, tokenId, msg.sender);
     }
 
-    function GetNFTAddress(address nft, uint256 tokenId) external view returns (address) {
+    function getNFTAddress(address nft, uint256 tokenId) external view returns (address) {
         return nftAddress[nft][tokenId];
     }
 }

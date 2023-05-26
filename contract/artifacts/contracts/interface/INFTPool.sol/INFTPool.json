@@ -16,7 +16,7 @@
           "type": "uint256"
         }
       ],
-      "name": "CheckLiquidateNFTPrice",
+      "name": "checkLiquidateNFTPrice",
       "outputs": [
         {
           "internalType": "uint256",
@@ -40,7 +40,7 @@
           "type": "uint256"
         }
       ],
-      "name": "CheckNFTStatus",
+      "name": "checkNFTStatus",
       "outputs": [
         {
           "internalType": "int256",
@@ -64,7 +64,7 @@
           "type": "uint256"
         }
       ],
-      "name": "GetNFTMortgageInfo",
+      "name": "getNFTMortgageInfo",
       "outputs": [
         {
           "internalType": "uint256",
@@ -77,7 +77,7 @@
     },
     {
       "inputs": [],
-      "name": "GetTokenAddress",
+      "name": "getTokenAddress",
       "outputs": [
         {
           "internalType": "address",
