@@ -4,6 +4,8 @@ pragma solidity ^0.8.9;
 import './interface/INFTPool.sol';
 import './interface/IERC20.sol';
 import './interface/IERC721.sol';
+import './libraries/TransferHelper.sol';
+import "hardhat/console.sol";
 
 contract NFTPool is INFTPool {
     address token;
@@ -36,7 +38,9 @@ contract NFTPool is INFTPool {
     }
 
 
-
+    receive() external payable {} // to support receiving ETH by default
+    fallback() external payable {}
+    
     function initialize(address _token, address _bank)  external {
         require(msg.sender == factory, "NFTPool: FORBIDDEN");
         token = _token;
@@ -78,6 +82,14 @@ contract NFTPool is INFTPool {
         return nftRedeemAccount[nft][tokenId];
     }
 
+    function getNFTAccount(address nft, uint256 tokenId) external view override returns (uint256) {
+        return nftAccout[nft][tokenId];
+    }
+
+    function getTotalSupply() external view returns (uint256) {
+        return totalSupply;
+    }
+
     function checkLiquidateNFTPrice(address nft, uint256 tokenId) external view override returns (uint256) {
         return nftAccout[nft][tokenId];
     }
@@ -93,7 +105,10 @@ contract NFTPool is INFTPool {
         require(IERC721(nft).ownerOf(tokenId) == address(this), "not owner");
         require(nftAccout[nft][tokenId] >= amount, "not enough");
         require(block.timestamp < timeReturn, "time error");
-        _safeTransfer(token, to, amount);
+        require(IERC20(token).balanceOf(address(this)) >= amount, "Not_Enough_Token");
+        IERC20(token).approve(address(this), amount);
+        IERC20(token).transferFrom(address(this), to, amount);
+        // TransferHelper.safeTransferFrom(token, address(this), to, amount);
         nftAccout[nft][tokenId] -= amount;
         nftRedeemAccount[nft][tokenId] = amount;
         nftOwner[nft][tokenId] = to;
@@ -109,7 +124,8 @@ contract NFTPool is INFTPool {
         require(IERC721(nft).ownerOf(tokenId) == address(this), "not nft owner");
         require(nftOwner[nft][tokenId] == to, "not old owner");
         uint256 transferIn = IERC20(token).balanceOf(address(this)) - totalSupply;
-        require(transferIn > nftRedeemAccount[nft][tokenId] , "not enough");
+        require(transferIn >= nftRedeemAccount[nft][tokenId] , "not enough");
+        IERC721(nft).approve(to, tokenId);
         IERC721(nft).safeTransferFrom(address(this), to, tokenId);
         if(transferIn > nftRedeemAccount[nft][tokenId]){
             _safeTransfer(token, to, transferIn - nftRedeemAccount[nft][tokenId]);

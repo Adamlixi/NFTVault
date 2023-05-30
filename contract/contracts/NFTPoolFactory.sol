@@ -56,7 +56,7 @@ contract NFTPoolFactory is INFTPoolFactory {
             pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         //调用pair地址的合约中的"initialize"方法,传入变量token0,token1
-        NFTPool(pool).initialize(token, router);
+        NFTPool(payable(pool)).initialize(token, router);
         //配对映射中设置token = pair
         getPool[token] = pool;
         //配对数组中推入pool地址
