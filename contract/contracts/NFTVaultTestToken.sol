@@ -8,4 +8,6 @@ contract NFTVaultTest is ERC20, Ownable {
     constructor() ERC20("NFTVaultTest", "NVC") {
         _mint(msg.sender, 20000000 * 10 ** decimals());
     }
+    receive() external payable {} // to support receiving ETH by default
+    fallback() external payable {}
 }
