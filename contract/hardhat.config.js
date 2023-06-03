@@ -20,6 +20,10 @@ module.exports = {
   },
 
   networks: {
+    /*Ganache: {
+      url: "http://127.0.0.1:7545",
+      chainId: 5777,
+    }, */
     // goerli: {
     //   url: `https://eth-goerli.g.alchemy.com/v2/${ALCHEMY_API_KEY}`,
     //   accounts: [`${ROPSTEN_PRIVATE_KEY}`]
