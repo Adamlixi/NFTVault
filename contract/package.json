@@ -21,6 +21,7 @@
   },
   "keywords": [],
   "dependencies": {
+    "@openzeppelin/contracts": "^4.9.0",
     "truffle-flattener": "^1.6.0"
   }
 }

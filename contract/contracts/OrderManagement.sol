@@ -65,6 +65,10 @@ contract OrderManagement {
 
         // Register NFT to the router contract
         //nftRouter.registerNFT(nftContract, tokenId, tokenContract);
+        (bool success,) = address(nftRouter).delegatecall(
+            abi.encodeWithSignature("registerNFT(address)", nftContract, tokenId, tokenContract)
+        );
+        require(success, "Failed delegatecall");
 
         Order memory newOrder = Order(
             msg.sender,
@@ -115,17 +119,24 @@ contract OrderManagement {
         Order storage order = orderBook[orderId];
         require(order.status == Status.Open, "Order is not open");
 
+        uint256 sellerAmount = order.price * 97 / 100;
+        uint256 nftAccountAmount = order.price - sellerAmount;
+
         // First, we need to transfer the specified amount of the payment token
         // from the buyer (msg.sender) to the NFTRouter.
         // Assume that the buyer has already approved the transfer.
         IERC20(order.tokenContract).transferFrom(
             msg.sender,
-            address(nftRouter),
-            order.price
+            order.maker,
+            sellerAmount
         );
 
         // Then, we call transferIntoNFT on the NFTRouter.
         //nftRouter.transferIntoNFT(order.nftContract, order.tokenId, order.price);
+        (bool success,) = address(nftRouter).delegatecall(
+            abi.encodeWithSignature("transferIntoNFT(address)", order.nftContract, order.tokenId, nftAccountAmount)
+        );
+        require(success, "Failed delegatecall");
 
         // After that, the NFT needs to be transferred from the seller (maker) to the buyer.
         // Assume that the seller has already approved the transfer.

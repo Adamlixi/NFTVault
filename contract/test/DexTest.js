@@ -65,9 +65,12 @@ describe("Dex", function () {
 
         // Create a pool for erc20 token
         await poolFactory.createPool(erc20.address);
+        const nftPool =  await poolFactory.getPoolByToken(erc20.address);
+        const Pool = await ethers.getContractFactory("NFTPool");
+        const pool = await Pool.attach(nftPool);
 
         // Order maker call registerNFT
-        await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
+        // await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
         // Create order
         await orderManagement.connect(maker).createOrder(
             erc721.address,
@@ -93,9 +96,14 @@ describe("Dex", function () {
         console.log("Filling order...");
         await orderManagement.connect(taker).fillOrder(0);
 
-        const balanceAfterFill = await erc20.balanceOf(taker.address);
-        console.log("ERC20 balance of taker after filling order:", balanceAfterFill.toString());
+        const balanceAfterFillTaker = await erc20.balanceOf(taker.address);
+        console.log("ERC20 balance of taker after filling order:", balanceAfterFillTaker.toString());
 
+        const balanceAfterFillMaker = await erc20.balanceOf(maker.address);
+        console.log("ERC20 balance of maker after filling order:", balanceAfterFillMaker.toString());
+
+        const nftAccount = await pool.getNFTAccount(erc721.address, tokenId);
+        console.log("NFT account balance: " , nftAccount.toString());
 
         // Verify that the taker now owns the NFT
         const newOwner = await erc721.ownerOf(tokenId);
