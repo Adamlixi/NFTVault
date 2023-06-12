@@ -71,11 +71,7 @@ contract OrderManagement {
         require(recoveredAddress == msg.sender, "Invalid signature");
 
         // Register NFT to the router contract
-        //nftRouter.registerNFT(nftContract, tokenId, tokenContract);
-        (bool success,) = address(nftRouter).delegatecall(
-            abi.encodeWithSignature("registerNFT(address)", nftContract, tokenId, tokenContract)
-        );
-        require(success, "Failed delegatecall");
+        nftRouter.registerNFT(nftContract, tokenId, tokenContract);
 
         Order memory newOrder = Order(
             msg.sender,
