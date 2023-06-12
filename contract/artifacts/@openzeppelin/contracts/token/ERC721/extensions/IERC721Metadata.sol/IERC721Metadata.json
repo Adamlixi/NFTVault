@@ -250,7 +250,7 @@
         },
         {
           "internalType": "bool",
-          "name": "approved",
+          "name": "_approved",
           "type": "bool"
         }
       ],

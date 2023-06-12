@@ -127,16 +127,23 @@ contract OrderManagement {
         // Assume that the buyer has already approved the transfer.
         IERC20(order.tokenContract).transferFrom(
             msg.sender,
+            address(this),
+            nftAccountAmount
+        );
+
+        IERC20(order.tokenContract).approve(address(nftRouter), nftAccountAmount);
+
+        IERC20(order.tokenContract).transferFrom(
+            msg.sender,
             order.maker,
             sellerAmount
         );
-
         // Then, we call transferIntoNFT on the NFTRouter.
-        //nftRouter.transferIntoNFT(order.nftContract, order.tokenId, order.price);
-        (bool success,) = address(nftRouter).delegatecall(
-            abi.encodeWithSignature("transferIntoNFT(address)", order.nftContract, order.tokenId, nftAccountAmount)
-        );
-        require(success, "Failed delegatecall");
+        nftRouter.transferIntoNFT(order.nftContract, order.tokenId, nftAccountAmount);
+        // (bool success,) = address(nftRouter).delegatecall(
+        //     abi.encodeWithSignature("transferIntoNFT(address,uint256,uint256)", order.nftContract, order.tokenId, nftAccountAmount)
+        // );
+        // require(success, "Failed delegatecall");
 
         // After that, the NFT needs to be transferred from the seller (maker) to the buyer.
         // Assume that the seller has already approved the transfer.

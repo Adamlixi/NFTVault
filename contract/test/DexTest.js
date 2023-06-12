@@ -41,11 +41,16 @@ describe("Dex", function () {
 
     it("should create and fill an order", async () => {
         const tokenDecimals = await erc20.decimals();
-        const price = ethers.utils.parseUnits("1", tokenDecimals); // set price as 1 token
+        const price = ethers.utils.parseUnits("1", tokenDecimals);
+        const priceFee = ethers.utils.parseUnits("0.03", tokenDecimals);
+        const priceAfter = ethers.utils.parseUnits("0.97", tokenDecimals); // set price as 1 token
         
         // Mint an NFT for the owner
         const tokenId = 0;
         await erc721.connect(owner).safeMint(owner.address);
+
+
+        await erc721.connect(owner).approve(maker.address, tokenId);
 
         // Transfer the NFT to maker
         await erc721.connect(owner).transferFrom(owner.address, maker.address, tokenId);
@@ -53,6 +58,11 @@ describe("Dex", function () {
 
         // Maker approves OrderManagement to move the NFT
         await erc721.connect(maker).approve(orderManagement.address, tokenId);
+
+        console.log("ERC721 owner is:", await erc721.ownerOf(tokenId));
+        console.log("owner address is:", owner.address);
+        console.log("maker address is:", maker.address);
+        console.log("taker address is:", taker.address);
 
         // Sign order
         const expiration = Math.floor(Date.now() / 1000) + 3600; // expiration in 1 hour
@@ -68,6 +78,8 @@ describe("Dex", function () {
         const nftPool =  await poolFactory.getPoolByToken(erc20.address);
         const Pool = await ethers.getContractFactory("NFTPool");
         const pool = await Pool.attach(nftPool);
+
+        await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
 
         // Order maker call registerNFT
         // await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
@@ -91,6 +103,7 @@ describe("Dex", function () {
 
         // Approve OrderManagement to spend tokens for the taker
         await erc20.connect(taker).approve(orderManagement.address, price);
+        await erc20.connect(taker).approve(nftRouter.address, price);
 
         // Fill order
         console.log("Filling order...");

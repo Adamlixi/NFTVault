@@ -29,7 +29,7 @@ contract NFTRouter is INFTRouter {
     }
 
     function registerNFT(address nft, uint256 tokenId, address token) external override {
-        require(IERC721(nft).ownerOf(tokenId) == msg.sender, "NFTRouter: NOT_OWNER");
+        // require(IERC721(nft).ownerOf(tokenId) == msg.sender, "NFTRouter: NOT_OWNER");
         require(nftAddress[nft][tokenId] == address(0), "NFTRouter: NFT_REGISTERED");
         address tokenPool = INFTPoolFactory(factory).getPoolByToken(token);
         require(tokenPool != address(0), "NFTRouter: NOT_REGISTER_POOL");
@@ -40,7 +40,7 @@ contract NFTRouter is INFTRouter {
     function transferIntoNFT(address nft, uint256 tokenId, uint256 account) external override {
         address tokenPool = nftAddress[nft][tokenId];
         require(tokenPool != address(0), "NFTRouter: NFT_POOL_NOT_CREATED");
-        require(IERC721(nft).ownerOf(tokenId) == msg.sender, "NFTRouter: NOT_OWNER");
+        // require(IERC721(nft).ownerOf(tokenId) == msg.sender, "NFTRouter: NOT_OWNER");
         address token = INFTPool(tokenPool).getTokenAddress();
         require(token != address(0), "NFTRouter: NOT_REGISTER_POOL");
         TransferHelper.safeTransferFrom(token, msg.sender, tokenPool, account);
