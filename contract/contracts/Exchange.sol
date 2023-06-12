@@ -3,13 +3,16 @@ pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import "./OrderManagement.sol";
+import "./NFTRouter.sol";
 
 contract Exchange {
 
     OrderManagement public orderMgr;
+    NFTRouter public nftRouter;
 
-    constructor(OrderManagement _orderMgr) {
+    constructor(OrderManagement _orderMgr, NFTRouter _nftRouter) {
         orderMgr = _orderMgr;
+        nftRouter = _nftRouter;
     }
 
  //   event OrderFilled(
@@ -39,18 +42,26 @@ contract Exchange {
         // Assume that the buyer has already approved the transfer.
         IERC20(order.tokenContract).transferFrom(
             msg.sender,
+            address(this),
+            nftAccountAmount
+        );
+
+        IERC20(order.tokenContract).approve(address(nftRouter), nftAccountAmount);
+
+        IERC20(order.tokenContract).transferFrom(
+            msg.sender,
             order.maker,
             sellerAmount
-         // address(orderMgr.getNFTRouter()),
-         // order.price
         );
+        // Then, we call transferIntoNFT on the NFTRouter.
+        nftRouter.transferIntoNFT(order.nftContract, order.tokenId, nftAccountAmount);
 
         // Then, we call transferIntoNFT on the NFTRouter.
         //nftRouter.transferIntoNFT(order.nftContract, order.tokenId, order.price);
-        (bool success,) = address(orderMgr.getNFTRouter()).delegatecall(
-            abi.encodeWithSignature("transferIntoNFT(address)", order.nftContract, order.tokenId, nftAccountAmount)
-        );
-        require(success, "Failed delegatecall");
+        // (bool success,) = address(orderMgr.getNFTRouter()).delegatecall(
+        //     abi.encodeWithSignature("transferIntoNFT(address)", order.nftContract, order.tokenId, nftAccountAmount)
+        // );
+        // require(success, "Failed delegatecall");
         // After that, the NFT needs to be transferred from the seller (maker) to the buyer.
         // Assume that the seller has already approved the transfer.
         IERC721(order.nftContract).transferFrom(

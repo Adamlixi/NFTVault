@@ -28,7 +28,7 @@ describe("Dex", function () {
         console.log("orderManagement deployed at:", orderManagement.address);
 
         Exchange = await ethers.getContractFactory("Exchange");
-        exchange = await Exchange.deploy(orderManagement.address);
+        exchange = await Exchange.deploy(orderManagement.address, nftRouter.address);
         await exchange.deployed();
         console.log("exchange deployed at:", exchange.address);
 
@@ -52,6 +52,9 @@ describe("Dex", function () {
         const tokenId = 0;
         await erc721.connect(owner).safeMint(owner.address);
 
+
+        await erc721.connect(owner).approve(maker.address, tokenId);
+
         // Transfer the NFT to maker
         await erc721.connect(owner).transferFrom(owner.address, maker.address, tokenId);
         // Now, maker has the tokenId 0
@@ -59,6 +62,11 @@ describe("Dex", function () {
         // Maker approves OrderManagement to move the NFT
         // await erc721.connect(maker).approve(orderManagement.address, tokenId);
         await erc721.connect(maker).approve(exchange.address, tokenId);
+
+        console.log("ERC721 owner is:", await erc721.ownerOf(tokenId));
+        console.log("owner address is:", owner.address);
+        console.log("maker address is:", maker.address);
+        console.log("taker address is:", taker.address);
 
         // Sign order
         const expiration = Math.floor(Date.now() / 1000) + 3600; // expiration in 1 hour
@@ -74,6 +82,8 @@ describe("Dex", function () {
         const nftPool =  await poolFactory.getPoolByToken(erc20.address);
         const Pool = await ethers.getContractFactory("NFTPool");
         const pool = await Pool.attach(nftPool);
+
+        await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
 
         // Order maker call registerNFT
         // await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
