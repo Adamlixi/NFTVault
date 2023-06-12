@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
@@ -32,8 +33,14 @@ contract OrderManagement {
     event OrderRemoved(uint256 orderId);
     event OrderPublished(uint256 orderId);
     event OrderUpdated(uint256 orderId, Status status);
-    event OrderFilled(uint256 orderId, address buyer);
-    event OrderCanceled(uint256 indexed orderId);
+
+    function getOrder(uint256 orderId) public view returns(Order memory) {
+        return orderBook[orderId]; // return 
+    }
+
+    function getNFTRouter() public view returns(NFTRouter) {
+        return nftRouter; // return 
+    }
 
     /* 
     create an order and emit the 'OrderCreated' event
@@ -91,16 +98,6 @@ contract OrderManagement {
         emit OrderRemoved(orderId);
     }
 
-    function cancelOrder(uint256 orderId) public onlyAuthorized(orderId) {
-        Order storage order = orderBook[orderId];
-
-        require(order.status == Status.Open, "Order is not open");
-
-        order.status = Status.Cancelled;
-
-        emit OrderCanceled(orderId);
-    }
-
     function publishOrder(uint256 orderId) public onlyAuthorized(orderId) {
         require(!orderBook[orderId].published, "Order already published");
         orderBook[orderId].published = true;
@@ -113,73 +110,6 @@ contract OrderManagement {
     ) public onlyAuthorized(orderId) {
         orderBook[orderId].status = status;
         emit OrderUpdated(orderId, status);
-    }
-
-    function fillOrder(uint256 orderId) public {
-        Order storage order = orderBook[orderId];
-        require(order.status == Status.Open, "Order is not open");
-
-        uint256 sellerAmount = order.price * 97 / 100;
-        uint256 nftAccountAmount = order.price - sellerAmount;
-
-        // First, we need to transfer the specified amount of the payment token
-        // from the buyer (msg.sender) to the NFTRouter.
-        // Assume that the buyer has already approved the transfer.
-        IERC20(order.tokenContract).transferFrom(
-            msg.sender,
-            order.maker,
-            sellerAmount
-        );
-
-        // Then, we call transferIntoNFT on the NFTRouter.
-        //nftRouter.transferIntoNFT(order.nftContract, order.tokenId, order.price);
-        (bool success,) = address(nftRouter).delegatecall(
-            abi.encodeWithSignature("transferIntoNFT(address)", order.nftContract, order.tokenId, nftAccountAmount)
-        );
-        require(success, "Failed delegatecall");
-
-        // After that, the NFT needs to be transferred from the seller (maker) to the buyer.
-        // Assume that the seller has already approved the transfer.
-        IERC721(order.nftContract).transferFrom(
-            order.maker,
-            msg.sender,
-            order.tokenId
-        );
-
-        // Update the order status.
-        order.status = Status.Filled;
-
-        emit OrderFilled(orderId, msg.sender);
-    }
-
-    function getFillOrderResults(
-        uint256 orderId
-    )
-        public
-        view
-        returns (
-            address maker,
-            address nftContract,
-            address tokenContract,
-            uint256 tokenId,
-            uint256 price,
-            uint256 expiration,
-            Status status
-        )
-    {
-        Order storage order = orderBook[orderId];
-
-        require(order.status == Status.Filled, "Order has not been filled");
-
-        return (
-            order.maker,
-            order.nftContract,
-            order.tokenContract,
-            order.tokenId,
-            order.price,
-            order.expiration,
-            order.status
-        );
     }
 
     modifier onlyAuthorized(uint256 orderId) {

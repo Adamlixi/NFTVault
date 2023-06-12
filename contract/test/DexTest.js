@@ -2,8 +2,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Dex", function () {
-    let OrderManagement, ERC721Mock, ERC20Mock, NFTRouter;
-    let orderManagement, erc721, erc20, nftRouter;
+    let Exchange, OrderManagement, ERC721Mock, ERC20Mock, NFTRouter;
+    let exchange, orderManagement, erc721, erc20, nftRouter;
     let owner, maker, taker;
 
     beforeEach(async () => {
@@ -26,6 +26,11 @@ describe("Dex", function () {
         orderManagement = await OrderManagement.deploy(nftRouter.address);
         await orderManagement.deployed();
         console.log("orderManagement deployed at:", orderManagement.address);
+
+        Exchange = await ethers.getContractFactory("Exchange");
+        exchange = await Exchange.deploy(orderManagement.address);
+        await exchange.deployed();
+        console.log("exchange deployed at:", exchange.address);
 
         ERC20Mock = await ethers.getContractFactory("NFTVaultTest");
         erc20 = await ERC20Mock.deploy();
@@ -52,7 +57,8 @@ describe("Dex", function () {
         // Now, maker has the tokenId 0
 
         // Maker approves OrderManagement to move the NFT
-        await erc721.connect(maker).approve(orderManagement.address, tokenId);
+        // await erc721.connect(maker).approve(orderManagement.address, tokenId);
+        await erc721.connect(maker).approve(exchange.address, tokenId);
 
         // Sign order
         const expiration = Math.floor(Date.now() / 1000) + 3600; // expiration in 1 hour
@@ -90,11 +96,13 @@ describe("Dex", function () {
         console.log("ERC20 balance of taker after transfer:", balanceAfterTransfer.toString());
 
         // Approve OrderManagement to spend tokens for the taker
-        await erc20.connect(taker).approve(orderManagement.address, price);
+        // await erc20.connect(taker).approve(orderManagement.address, price);
+        await erc20.connect(taker).approve(exchange.address, price);
 
         // Fill order
         console.log("Filling order...");
-        await orderManagement.connect(taker).fillOrder(0);
+        // await orderManagement.connect(taker).fillOrder(0);
+        await exchange.connect(taker).fillOrder(0);
 
         const balanceAfterFillTaker = await erc20.balanceOf(taker.address);
         console.log("ERC20 balance of taker after filling order:", balanceAfterFillTaker.toString());
