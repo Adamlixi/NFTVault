@@ -34,12 +34,12 @@ contract OrderManagement {
     event OrderPublished(uint256 orderId);
     event OrderUpdated(uint256 orderId, Status status);
 
-    function getOrder(uint256 orderId) public view returns(Order memory) {
-        return orderBook[orderId]; // return 
+    function getOrder(uint256 orderId) public view returns (Order memory) {
+        return orderBook[orderId]; // return
     }
 
-    function getNFTRouter() public view returns(NFTRouter) {
-        return nftRouter; // return 
+    function getNFTRouter() public view returns (NFTRouter) {
+        return nftRouter; // return
     }
 
     /* 
@@ -107,7 +107,7 @@ contract OrderManagement {
         orderBook[orderId].status = status;
         emit OrderUpdated(orderId, status);
     }
-    
+
     modifier onlyAuthorized(uint256 orderId) {
         require(orderBook[orderId].maker == msg.sender, "Not authorized");
         _;
