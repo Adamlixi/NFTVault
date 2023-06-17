@@ -29,6 +29,7 @@ describe("Bank Test", function () {
 
     await nftTest.safeMint(owner.address)
     console.log("NFTMint to address:", owner.address);
+    console.log("NFT Info:", await nftTest.tokenURI(0));
 
     await poolFactory.createPool(token.address);
     const nftPool =  await poolFactory.getPoolByToken(token.address);
