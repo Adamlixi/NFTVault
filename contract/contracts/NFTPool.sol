@@ -19,6 +19,7 @@ contract NFTPool is INFTPool {
     mapping(address => mapping (uint256 => int)) public nftState;
     mapping(address => mapping (uint256 => uint256)) public nftRedeemAccount;
     mapping(address => mapping (uint256 => address)) public nftOwner;
+    mapping(address => uint256[]) public nftTokens;
     uint256 private unlocked = 1;
     address public factory; //工厂地址
     address public bank;
@@ -76,6 +77,11 @@ contract NFTPool is INFTPool {
 
     function registerNFT(address nft, uint256 tokenId) external override {
         nftAccout[nft][tokenId] = 0;
+        nftTokens[nft].push(tokenId);
+    }
+
+    function getNFTTokens(address nft) external view returns (uint256[] memory) {
+        return nftTokens[nft];
     }
 
     function getNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
