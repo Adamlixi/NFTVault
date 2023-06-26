@@ -17,9 +17,6 @@ contract NFTAuction {
     uint256 public constant DURATION = 3000; // ~9 hours in blocks (assuming ~15s/block)
     
     mapping(address => mapping(uint256 => Auction)) public auctions;
-    
-    // used to track pending returns for bidders
-    mapping(address => uint256) public pendingReturns;
 
     // used to track admins allow to create auctions
     mapping(address => bool) public admins;
@@ -61,6 +58,7 @@ contract NFTAuction {
         emit AuctionCreated(msg.sender, nftContract, tokenId, startingPrice);
     }
 
+    
     function placeBid(address nftContract, uint256 tokenId, address tokenContract, uint256 tokenAmount) public {
         require(auctions[nftContract][tokenId].active, "Auction not active");
         require(auctions[nftContract][tokenId].duration == 0 || block.number <= auctions[nftContract][tokenId].duration, "Auction ended");
@@ -68,7 +66,6 @@ contract NFTAuction {
 
         IERC20 token = IERC20(tokenContract);
         require(token.transferFrom(msg.sender, address(this), tokenAmount), "Token transfer failed");
-
         if (auctions[nftContract][tokenId].highestBid != 0) {
             require(token.transfer(auctions[nftContract][tokenId].highestBidder, auctions[nftContract][tokenId].highestBid), "Refund of the previous bid failed");
         } else {
@@ -81,18 +78,6 @@ contract NFTAuction {
         emit AuctionBid(msg.sender, nftContract, tokenId, tokenAmount);
     }
 
-    function withdraw() public returns (bool) {
-        uint256 amount = pendingReturns[msg.sender];
-        if (amount > 0) {
-            pendingReturns[msg.sender] = 0;
-
-            if (!payable(msg.sender).send(amount)) {
-                pendingReturns[msg.sender] = amount;
-                return false;
-            }
-        }
-        return true;
-    }
 
     function endAuction(address nftContract, uint256 tokenId) public {
         require(auctions[nftContract][tokenId].duration != 0 && block.number >= auctions[nftContract][tokenId].duration, "Auction not yet ended");
