@@ -16,6 +16,12 @@ async function main() {
     await token.deployed();
     console.log("NFTVaultTest Token address:", token.address);
 
+    // NFT deploy
+    const NFTTest = await ethers.getContractFactory("NFTVault");
+    const nftTest = await NFTTest.deploy();
+    await nftTest.deployed();
+    console.log("NFTTest address:", nftTest.address);
+
     const NFTRouter = await ethers.getContractFactory("NFTRouter");
     const nftRouter = await NFTRouter.deploy();
     await nftRouter.deployed();
