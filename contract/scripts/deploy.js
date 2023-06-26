@@ -30,10 +30,25 @@ async function main() {
     const createPool =  await poolFactory.getPoolByToken(token.address);
     console.log("NFTPoolFactory createPool:", createPool);
 
-    // const WETH = await ethers.getContractFactory("WETH9");
-    // const weth = await WETH.deploy();
+    const WETH = await ethers.getContractFactory("WETH9");
+    const weth = await WETH.deploy();
+    await weth.deployed();
+    console.log("WETH address:", weth.address);
 
-    // console.log("WETH address:", weth.address);
+    OrderManagement = await ethers.getContractFactory("OrderManagement");
+    orderManagement = await OrderManagement.deploy(nftRouter.address);
+    await orderManagement.deployed();
+    console.log("OrderManagement address:", orderManagement.address);
+
+    Exchange = await ethers.getContractFactory("Exchange");
+    exchange = await Exchange.deploy(orderManagement.address, nftRouter.address, weth.address);
+    await exchange.deployed();
+    console.log("Exchange address:", exchange.address);
+
+    NFTAuction = await ethers.getContractFactory("NFTAuction");
+    nftAuction = await NFTAuction.deploy();
+    await nftAuction.deployed();
+    console.log("NFTAuction address:", nftAuction.address);
   }
   
   main()
