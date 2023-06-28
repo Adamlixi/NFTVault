@@ -47,6 +47,10 @@ describe("Dex", function () {
         await erc721.deployed();
         console.log("erc-721 token deployed at:", erc721.address);
 
+        NFTAuction = await ethers.getContractFactory("NFTAuction");
+        nftAuction = await NFTAuction.deploy();
+        await nftAuction.deployed();
+
 
     });
 
@@ -84,7 +88,7 @@ describe("Dex", function () {
         const signature = await maker.signMessage(message);
 
         // Create a pool for a mock erc20 token
-        await poolFactory.createPool(erc20.address);
+        await poolFactory.createPool(erc20.address, nftAuction.address);
         const nftPool = await poolFactory.getPoolByToken(erc20.address);
         const Pool = await ethers.getContractFactory("NFTPool");
         const pool = await Pool.attach(nftPool);
@@ -150,7 +154,7 @@ describe("Dex", function () {
         await erc721.connect(maker).approve(exchange.address, tokenId);
 
         // Create a pool for weth9 token, which should abide to erc20
-        await poolFactory.createPool(weth9.address);
+        await poolFactory.createPool(weth9.address, nftAuction.address);
 
         // This block is the same
         const expiration = Math.floor(Date.now() / 1000) + 3600;

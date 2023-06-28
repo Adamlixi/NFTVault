@@ -44,7 +44,7 @@ contract NFTPoolFactory is INFTPoolFactory {
      * @return pool Pool地址
      * @dev 创建配对
      */
-    function createPool(address token) external returns (address pool) {
+    function createPool(address token, address nftAuction) external returns (address pool) {
         //给bytecode变量赋值"NFTPool"合约的创建字节码
         bytes memory bytecode = type(NFTPool).creationCode;
         //将token0和token1打包后创建哈希
@@ -56,7 +56,7 @@ contract NFTPoolFactory is INFTPoolFactory {
             pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         //调用pair地址的合约中的"initialize"方法,传入变量token0,token1
-        NFTPool(payable(pool)).initialize(token, router);
+        NFTPool(payable(pool)).initialize(token, router, nftAuction);
         //配对映射中设置token = pair
         getPool[token] = pool;
         //配对数组中推入pool地址

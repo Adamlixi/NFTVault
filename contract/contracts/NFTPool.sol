@@ -6,6 +6,7 @@ import './interface/IERC20.sol';
 import './interface/IERC721.sol';
 import './libraries/TransferHelper.sol';
 import "hardhat/console.sol";
+import './NFTAuction.sol';
 
 contract NFTPool is INFTPool {
     address token;
@@ -15,15 +16,15 @@ contract NFTPool is INFTPool {
         keccak256(bytes("transfer(address,uint256)"))
     );
 
-    mapping(address => mapping (uint256 => uint256)) public nftAccout;
+    mapping(address => mapping (uint256 => uint256)) public nftAccount;
     mapping(address => mapping (uint256 => int)) public nftState;
     mapping(address => mapping (uint256 => uint256)) public nftRedeemAccount;
     mapping(address => mapping (uint256 => address)) public nftOwner;
-    mapping(address => uint256[]) public nftTokens;
+
     uint256 private unlocked = 1;
     address public factory; //工厂地址
     address public bank;
-
+    address public auctionAddress;
 
     constructor() {
         //factory地址为合约布署者
@@ -42,10 +43,11 @@ contract NFTPool is INFTPool {
     receive() external payable {} // to support receiving ETH by default
     fallback() external payable {}
     
-    function initialize(address _token, address _bank)  external {
+    function initialize(address _token, address _bank, address _auction)  external {
         require(msg.sender == factory, "NFTPool: FORBIDDEN");
         token = _token;
         bank = _bank;
+        auctionAddress = _auction;
     }
 
     function _safeTransfer(
@@ -70,18 +72,13 @@ contract NFTPool is INFTPool {
         uint256 nftCount = IERC20(token).balanceOf(address(this));
         uint256 transferCount = nftCount - totalSupply;
         require(transferCount > 0 , "transfer count <= 0.");
-        nftAccout[nft][tokenId] += transferCount;
+        nftAccount[nft][tokenId] += transferCount;
         totalSupply = nftCount;
     }
 
 
     function registerNFT(address nft, uint256 tokenId) external override {
-        nftAccout[nft][tokenId] = 0;
-        nftTokens[nft].push(tokenId);
-    }
-
-    function getNFTTokens(address nft) external view returns (uint256[] memory) {
-        return nftTokens[nft];
+        nftAccount[nft][tokenId] = 0;
     }
 
     function getNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
@@ -89,7 +86,7 @@ contract NFTPool is INFTPool {
     }
 
     function getNFTAccount(address nft, uint256 tokenId) external view override returns (uint256) {
-        return nftAccout[nft][tokenId];
+        return nftAccount[nft][tokenId];
     }
 
     function getTotalSupply() external view returns (uint256) {
@@ -97,7 +94,7 @@ contract NFTPool is INFTPool {
     }
 
     function checkLiquidateNFTPrice(address nft, uint256 tokenId) external view override returns (uint256) {
-        return nftAccout[nft][tokenId];
+        return nftAccount[nft][tokenId];
     }
     
     function checkNFTStatus(address nft, uint256 tokenId) external view override returns (int) {
@@ -109,13 +106,13 @@ contract NFTPool is INFTPool {
         require(nft != address(0), "transfer to the zero NFT address");
         require(IERC721(nft).supportsInterface(0x80ac58cd), "not ERC721");
         require(IERC721(nft).ownerOf(tokenId) == address(this), "not owner");
-        require(nftAccout[nft][tokenId] >= amount, "not enough");
+        require(nftAccount[nft][tokenId] >= amount, "not enough");
         require(block.timestamp < timeReturn, "time error");
         require(IERC20(token).balanceOf(address(this)) >= amount, "Not_Enough_Token");
         IERC20(token).approve(address(this), amount);
         IERC20(token).transferFrom(address(this), to, amount);
         // TransferHelper.safeTransferFrom(token, address(this), to, amount);
-        nftAccout[nft][tokenId] -= amount;
+        nftAccount[nft][tokenId] -= amount;
         nftRedeemAccount[nft][tokenId] = amount;
         nftOwner[nft][tokenId] = to;
         nftState[nft][tokenId] = int(timeReturn);
@@ -136,12 +133,30 @@ contract NFTPool is INFTPool {
         if(transferIn > nftRedeemAccount[nft][tokenId]){
             _safeTransfer(token, to, transferIn - nftRedeemAccount[nft][tokenId]);
         }
-        nftAccout[nft][tokenId] += nftRedeemAccount[nft][tokenId];
+        nftAccount[nft][tokenId] += nftRedeemAccount[nft][tokenId];
         nftRedeemAccount[nft][tokenId] = 0;
         nftState[nft][tokenId] = 0;
         nftOwner[nft][tokenId] = address(0);
         totalSupply = IERC20(token).balanceOf(address(this));
     }
+
+    function defaultAndStartAuction(address nft, uint256 tokenId) external {
+        // Only continue if redemption time has passed
+        require(nftState[nft][tokenId] < int(block.timestamp), "NFTPool: Not default state yet");
+
+        NFTAuction auction = NFTAuction(auctionAddress);
+        
+        // Create the auction for the NFT
+        IERC721(nft).approve(address(auction), tokenId);
+        IERC721(nft).safeTransferFrom(address(this), address(auction), tokenId);
+        // starting price should be the same as current nftaccount
+        auction.createAuction(nft, tokenId, nftAccount[nft][tokenId] + nftRedeemAccount[nft][tokenId]);
+        
+        // Update the state of the NFT
+        nftState[nft][tokenId] = -1;  // -1 could mean that it's in auction
+        nftOwner[nft][tokenId] = address(0);
+    }
+
 
     function getTokenAddress() external view override returns (address) {
         return token;

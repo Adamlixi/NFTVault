@@ -32,7 +32,12 @@ async function main() {
     await poolFactory.deployed();
     console.log("NFTPoolFactory address:", poolFactory.address);
 
-    await poolFactory.createPool(token.address);
+    NFTAuction = await ethers.getContractFactory("NFTAuction");
+    nftAuction = await NFTAuction.deploy();
+    await nftAuction.deployed();
+    console.log("NFTAuction address:", nftAuction.address);
+
+    await poolFactory.createPool(token.address, nftAuction.address);
     const createPool =  await poolFactory.getPoolByToken(token.address);
     console.log("NFTPoolFactory createPool:", createPool);
 
@@ -51,10 +56,6 @@ async function main() {
     await exchange.deployed();
     console.log("Exchange address:", exchange.address);
 
-    NFTAuction = await ethers.getContractFactory("NFTAuction");
-    nftAuction = await NFTAuction.deploy();
-    await nftAuction.deployed();
-    console.log("NFTAuction address:", nftAuction.address);
   }
   
   main()

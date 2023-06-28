@@ -27,8 +27,12 @@ describe("NFTAuction Test", function () {
         console.log("PoolFactory deployed at:", poolFactory.address);
         await nftRouter.setFactory(poolFactory.address);
 
+        NFTAuction = await ethers.getContractFactory("NFTAuction");
+        nftAuction = await NFTAuction.deploy();
+        await nftAuction.deployed();
+
         // Create a pool for a mock erc20 token
-        await poolFactory.createPool(erc20.address);
+        await poolFactory.createPool(erc20.address, nftAuction.address);
         const nftPool = await poolFactory.getPoolByToken(erc20.address);
         const Pool = await ethers.getContractFactory("NFTPool");
         pool = await Pool.attach(nftPool);
@@ -37,9 +41,6 @@ describe("NFTAuction Test", function () {
         orderManagement = await OrderManagement.deploy(nftRouter.address);
         await orderManagement.deployed();
 
-        NFTAuction = await ethers.getContractFactory("NFTAuction");
-        nftAuction = await NFTAuction.deploy();
-        await nftAuction.deployed();
 
     });
 

@@ -31,7 +31,11 @@ describe("Bank Test", function () {
     console.log("NFTMint to address:", owner.address);
     console.log("NFT Info:", await nftTest.tokenURI(0));
 
-    await poolFactory.createPool(token.address);
+    NFTAuction = await ethers.getContractFactory("NFTAuction");
+    nftAuction = await NFTAuction.deploy();
+    await nftAuction.deployed();
+
+    await poolFactory.createPool(token.address, nftAuction.address);
     const nftPool =  await poolFactory.getPoolByToken(token.address);
     console.log("NFTPoolFactory createPool:", nftPool);
 
