@@ -1,0 +1,6 @@
+.exit
+exit;
+exit
+const poolF = await PoolFactory.attach('0x14f0aAb11121648Db60b19f982e5457587c82fc5');
+const box = await Box.attach('0x425668350bD782D80D457d5F9bc7782A24B8c2ef');
+const PoolFactory = await ethers.getContractFactory("NFTPoolFactory");
