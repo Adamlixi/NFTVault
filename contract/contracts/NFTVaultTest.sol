@@ -63,6 +63,10 @@ contract NFTVaultTest is ERC20, Ownable {
         updateAccumulateInterestRate();
     }
 
+    function registerMint(uint256 count) external onlyPool {
+        _mint(msg.sender, count);
+    }
+
     function withDrawMoney(uint256 _tokenId, uint256 moneyCount) external {
         require(ERC721(nftBank).ownerOf(_tokenId) == msg.sender, "Not owner.");
         require(userSavingCount[_tokenId] >= moneyCount, "Not enough.");

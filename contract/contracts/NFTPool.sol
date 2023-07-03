@@ -16,6 +16,8 @@ contract NFTPool is INFTPool {
     bytes4 private constant SELECTOR = bytes4(
         keccak256(bytes("transfer(address,uint256)"))
     );
+    uint256 initCount = 1000 * 10 ** 18;
+    uint256 registerCount = 0;
 
     mapping(address => mapping (uint256 => uint256)) public nftAccount;
     mapping(address => mapping (uint256 => int)) public nftState;
@@ -85,6 +87,16 @@ contract NFTPool is INFTPool {
 
     function registerNFT(address nft, uint256 tokenId) external override {
         nftAccount[nft][tokenId] = 0;
+        if (token == nftVault) {
+            if (registerCount % 1000 == 0) {
+                registerCount = 0;
+                initCount /= 2;
+            }
+            registerCount += 1;
+            INFTToken(nftVault).updateMoneyInNFT(int256(registerCount));
+            nftAccount[nft][tokenId] = initCount;
+            INFTToken(nftVault).registerMint(initCount);
+        }
     }
 
     function getNFTMortgageInfo(address nft, uint256 tokenId) external view override returns (uint256) {
