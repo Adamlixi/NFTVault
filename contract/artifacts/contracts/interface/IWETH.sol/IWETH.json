@@ -4,16 +4,37 @@
   "sourceName": "contracts/interface/IWETH.sol",
   "abi": [
     {
-      "constant": false,
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "guy",
+          "type": "address"
+        },
+        {
+          "internalType": "uint256",
+          "name": "wad",
+          "type": "uint256"
+        }
+      ],
+      "name": "approve",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [],
       "name": "deposit",
       "outputs": [],
-      "payable": true,
       "stateMutability": "payable",
       "type": "function"
     },
     {
-      "constant": false,
       "inputs": [
         {
           "internalType": "address",
@@ -34,12 +55,10 @@
           "type": "bool"
         }
       ],
-      "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
     },
     {
-      "constant": false,
       "inputs": [
         {
           "internalType": "uint256",
@@ -49,7 +68,6 @@
       ],
       "name": "withdraw",
       "outputs": [],
-      "payable": false,
       "stateMutability": "nonpayable",
       "type": "function"
     }

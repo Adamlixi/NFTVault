@@ -2,7 +2,7 @@
 pragma solidity ^0.8.9;
 
 interface INFTPool {
-    function initialize(address _token, address _bank, address _auction)  external;
+    function initialize(address _token, address _bank, address _auction, address nftVault)  external;
     function transferIntoNFT(address nft, uint256 tokenId) external;
     function registerNFT(address nft, uint256 tokenId) external;
     function getNFTMortgageInfo(address nft, uint256 tokenId) external view returns (uint256);

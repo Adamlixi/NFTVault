@@ -9,6 +9,11 @@
           "internalType": "address",
           "name": "token",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "auction",
+          "type": "address"
         }
       ],
       "name": "createPool",

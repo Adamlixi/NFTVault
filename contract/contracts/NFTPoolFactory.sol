@@ -13,6 +13,7 @@ contract NFTPoolFactory is INFTPoolFactory {
     mapping(address => address) public getPool;
     //所有配对数组
     address[] public allPools;
+    address public nftVault;
     //配对合约的Bytecode的hash
     bytes32 public constant INIT_CODE_PAIR_HASH = keccak256(abi.encodePacked(type(NFTPool).creationCode));
     //事件:配对被创建
@@ -22,9 +23,10 @@ contract NFTPoolFactory is INFTPoolFactory {
      * @dev 构造函数
      * @param _feeToSetter 收税开关权限控制
      */
-    constructor(address _feeToSetter, address _router) {
+    constructor(address _feeToSetter, address _router, address _nftVault) {
         feeToSetter = _feeToSetter;
         router = _router;
+        nftVault = _nftVault;
     }
 
     /**
@@ -56,7 +58,7 @@ contract NFTPoolFactory is INFTPoolFactory {
             pool := create2(0, add(bytecode, 32), mload(bytecode), salt)
         }
         //调用pair地址的合约中的"initialize"方法,传入变量token0,token1
-        NFTPool(payable(pool)).initialize(token, router, nftAuction);
+        NFTPool(payable(pool)).initialize(token, router, nftAuction, nftVault);
         //配对映射中设置token = pair
         getPool[token] = pool;
         //配对数组中推入pool地址

@@ -7,6 +7,7 @@ import './interface/IERC721.sol';
 import './libraries/TransferHelper.sol';
 import "hardhat/console.sol";
 import './NFTAuction.sol';
+import './interface/INFTToken.sol';
 
 contract NFTPool is INFTPool {
     address token;
@@ -25,6 +26,7 @@ contract NFTPool is INFTPool {
     address public factory; //工厂地址
     address public bank;
     address public auctionAddress;
+    address nftVault;
 
     constructor() {
         //factory地址为合约布署者
@@ -43,11 +45,12 @@ contract NFTPool is INFTPool {
     receive() external payable {} // to support receiving ETH by default
     fallback() external payable {}
     
-    function initialize(address _token, address _bank, address _auction)  external {
+    function initialize(address _token, address _bank, address _auction, address _nftVault)  external {
         require(msg.sender == factory, "NFTPool: FORBIDDEN");
         token = _token;
         bank = _bank;
         auctionAddress = _auction;
+        nftVault = _nftVault;
     }
 
     function _safeTransfer(
@@ -74,6 +77,9 @@ contract NFTPool is INFTPool {
         require(transferCount > 0 , "transfer count <= 0.");
         nftAccount[nft][tokenId] += transferCount;
         totalSupply = nftCount;
+        if (token == nftVault) {
+            INFTToken(nftVault).updateMoneyInNFT(int256(transferCount));
+        }
     }
 
 
@@ -117,6 +123,9 @@ contract NFTPool is INFTPool {
         nftOwner[nft][tokenId] = to;
         nftState[nft][tokenId] = int(timeReturn);
         totalSupply = IERC20(token).balanceOf(address(this));
+        if (token == nftVault) {
+            INFTToken(nftVault).updateMoneyInNFT(-int256(amount));
+        }
     }
 
     function redeemNFT(address nft, uint256 tokenId, address to) external lock override {
@@ -138,6 +147,9 @@ contract NFTPool is INFTPool {
         nftState[nft][tokenId] = 0;
         nftOwner[nft][tokenId] = address(0);
         totalSupply = IERC20(token).balanceOf(address(this));
+        if (token == nftVault) {
+            INFTToken(nftVault).updateMoneyInNFT(int256(transferIn));
+        }
     }
 
     function defaultAndStartAuction(address nft, uint256 tokenId) external {
