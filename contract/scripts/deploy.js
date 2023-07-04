@@ -46,13 +46,8 @@ async function main() {
     await weth.deployed();
     console.log("WETH address:", weth.address);
 
-    OrderManagement = await ethers.getContractFactory("OrderManagement");
-    orderManagement = await OrderManagement.deploy(nftRouter.address);
-    await orderManagement.deployed();
-    console.log("OrderManagement address:", orderManagement.address);
-
     Exchange = await ethers.getContractFactory("Exchange");
-    exchange = await Exchange.deploy(orderManagement.address, nftRouter.address, weth.address);
+    exchange = await Exchange.deploy(nftRouter.address, weth.address);
     await exchange.deployed();
     console.log("Exchange address:", exchange.address);
 

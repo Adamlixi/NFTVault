@@ -1,8 +1,8 @@
 const { expect } = require("chai");
 
 describe("NFTAuction Test", function () {
-    let NFTAuction, OrderManagement, mockERC20, mockERC721;
-    let nftAuction, orderManagement, pool, erc20, erc721;
+    let NFTAuction, mockERC20, mockERC721;
+    let nftAuction, pool, erc20, erc721;
     let owner, bidder, bidder2;
 
     beforeEach(async () => {
@@ -36,11 +36,6 @@ describe("NFTAuction Test", function () {
         const nftPool = await poolFactory.getPoolByToken(erc20.address);
         const Pool = await ethers.getContractFactory("NFTPool");
         pool = await Pool.attach(nftPool);
-
-        OrderManagement = await ethers.getContractFactory("OrderManagement");
-        orderManagement = await OrderManagement.deploy(nftRouter.address);
-        await orderManagement.deployed();
-
 
     });
 

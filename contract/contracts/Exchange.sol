@@ -2,40 +2,122 @@
 pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import "./OrderManagement.sol";
+import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "./NFTRouter.sol";
 import "./interface/IWETH.sol";
 
 contract Exchange {
-    OrderManagement public orderMgr;
+        enum Status {
+        Open,
+        Filled,
+        Cancelled
+    }
+
+    struct Order {
+        address maker;
+        address nftContract;
+        address tokenContract;
+        uint256 tokenId;
+        uint256 price;
+        uint256 expiration;
+        bool published;
+        Status status;
+    }
+
     NFTRouter public nftRouter;
     IWETH public weth;
+    mapping(uint256 => Order) public orderBook;
+    uint256 public orderCount = 0;
 
-    constructor(OrderManagement _orderMgr, NFTRouter _nftRouter, IWETH _weth) {
-        orderMgr = _orderMgr;
+    event OrderCreated(uint256 orderId);
+    event OrderRemoved(uint256 orderId);
+    event OrderPublished(uint256 orderId);
+    event OrderUpdated(uint256 orderId, Status status);
+    event OrderFilled(uint256 orderId, address buyer);
+    event OrderCanceled(uint256 indexed orderId);
+
+    constructor(NFTRouter _nftRouter, IWETH _weth) {
         nftRouter = _nftRouter;
         weth = _weth;
     }
 
-    //   event OrderFilled(
-    //       TradeDirection direction,
-    //       address maker,
-    //       address taker,
-    //       uint256 nonce,
-    //       IERC20 erc20Token,
-    //       uint256 erc20TokenAmount,
-    //       IERC721 erc721Token,
-    //       uint256 erc721TokenId,
-    //       address matcher
-    //   );
-    //   event OrderCanceled(uint256 nonce, address maker);
-    event OrderFilled(uint256 orderId, address buyer);
-    event OrderCanceled(uint256 indexed orderId);
+    function getOrder(uint256 orderId) public view returns (Order memory) {
+        return orderBook[orderId];
+    }
+
+    function getNFTRouter() public view returns (NFTRouter) {
+        return nftRouter;
+    }
+
+    function createOrder(
+        address nftContract,
+        address tokenContract,
+        uint256 tokenId,
+        uint256 price,
+        uint256 expiration,
+        bytes memory signature
+    ) public {
+        bytes32 message = keccak256(
+            abi.encodePacked(
+                nftContract,
+                tokenContract,
+                tokenId,
+                price,
+                expiration
+            )
+        );
+        bytes32 ethSignedMessage = keccak256(
+            abi.encodePacked("\x19Ethereum Signed Message:\n32", message)
+        );
+        address recoveredAddress = ECDSA.recover(ethSignedMessage, signature);
+        require(recoveredAddress == msg.sender, "Invalid signature");
+
+        nftRouter.registerNFT(nftContract, tokenId, tokenContract);
+
+        Order memory newOrder = Order(
+            msg.sender,
+            nftContract,
+            tokenContract,
+            tokenId,
+            price,
+            expiration,
+            false,
+            Status.Open
+        );
+        orderBook[orderCount] = newOrder;
+
+        emit OrderCreated(orderCount);
+        orderCount++;
+    }
+
+    function removeOrder(uint256 orderId) public onlyAuthorized(orderId) {
+        delete orderBook[orderId];
+        emit OrderRemoved(orderId);
+    }
+
+    function publishOrder(uint256 orderId) public onlyAuthorized(orderId) {
+        require(!orderBook[orderId].published, "Order already published");
+        orderBook[orderId].published = true;
+        emit OrderPublished(orderId);
+    }
+
+    function updateOrderStatus(uint256 orderId, Status status)
+        public
+        onlyAuthorized(orderId)
+    {
+        orderBook[orderId].status = status;
+        emit OrderUpdated(orderId, status);
+    }
+
+    modifier onlyAuthorized(uint256 orderId) {
+        require(orderBook[orderId].maker == msg.sender, "Not authorized");
+        _;
+    }
 
     function fillOrder(uint256 orderId) public {
-        OrderManagement.Order memory order = orderMgr.getOrder(orderId);
+        Order memory order = getOrder(orderId);
         require(
-            order.status == OrderManagement.Status.Open,
+            order.status == Status.Open,
             "Order is not open"
         );
 
@@ -76,28 +158,28 @@ contract Exchange {
         );
 
         // Update the order status.
-        order.status = OrderManagement.Status.Filled;
+        order.status = Status.Filled;
 
         emit OrderFilled(orderId, msg.sender);
     }
 
     function cancelOrder(uint256 orderId) public {
-        OrderManagement.Order memory order = orderMgr.getOrder(orderId);
+        Order memory order = getOrder(orderId);
 
         require(
-            order.status == OrderManagement.Status.Open,
+            order.status == Status.Open,
             "Order is not open"
         );
 
-        order.status = OrderManagement.Status.Cancelled;
+        order.status = Status.Cancelled;
 
         emit OrderCanceled(orderId);
     }
 
     function fillOrderWithEther(uint256 orderId) public payable {
-        OrderManagement.Order memory order = orderMgr.getOrder(orderId);
+        Order memory order = getOrder(orderId);
         require(
-            order.status == OrderManagement.Status.Open,
+            order.status == Status.Open,
             "Order is not open"
         );
         require(msg.value == order.price, "Incorrect ETH value sent");
@@ -127,7 +209,7 @@ contract Exchange {
         // Unwrap the remaining WETH back to ETH, which should be zero as it's all been used in transferIntoNFT
         // weth.withdraw(nftAccountAmount);
 
-        order.status = OrderManagement.Status.Filled;
+        order.status = Status.Filled;
         emit OrderFilled(orderId, msg.sender);
     }
 
@@ -143,13 +225,13 @@ contract Exchange {
             uint256 tokenId,
             uint256 price,
             uint256 expiration,
-            OrderManagement.Status status
+            Status status
         )
     {
-        OrderManagement.Order memory order = orderMgr.getOrder(orderId);
+        Order memory order = getOrder(orderId);
 
         require(
-            order.status == OrderManagement.Status.Filled,
+            order.status == Status.Filled,
             "Order has not been filled"
         );
 

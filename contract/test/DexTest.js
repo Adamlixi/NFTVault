@@ -2,8 +2,8 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 describe("Dex", function () {
-    let Exchange, OrderManagement, ERC721Mock, ERC20Mock, NFTRouter, WETH9;
-    let exchange, orderManagement, erc721, erc20, nftRouter, weth9;
+    let Exchange, ERC721Mock, ERC20Mock, NFTRouter, WETH9;
+    let exchange, erc721, erc20, nftRouter, weth9;
     let owner, maker, taker;
 
     beforeEach(async () => {
@@ -22,18 +22,13 @@ describe("Dex", function () {
         console.log("PoolFactory deployed at:", poolFactory.address);
         await nftRouter.setFactory(poolFactory.address);
 
-        OrderManagement = await ethers.getContractFactory("OrderManagement");
-        orderManagement = await OrderManagement.deploy(nftRouter.address);
-        await orderManagement.deployed();
-        console.log("orderManagement deployed at:", orderManagement.address);
-
         WETH9 = await ethers.getContractFactory("WETH9");
         weth9 = await WETH9.deploy();
         await weth9.deployed();
         console.log("weth9 deployed at:", weth9.address);
 
         Exchange = await ethers.getContractFactory("Exchange");
-        exchange = await Exchange.deploy(orderManagement.address, nftRouter.address, weth9.address);
+        exchange = await Exchange.deploy(nftRouter.address, weth9.address);
         await exchange.deployed();
         console.log("exchange deployed at:", exchange.address);
 
@@ -69,8 +64,6 @@ describe("Dex", function () {
         await erc721.connect(owner).transferFrom(owner.address, maker.address, tokenId);
         // Now, maker has the tokenId 0
 
-        // Maker approves OrderManagement to move the NFT
-        // await erc721.connect(maker).approve(orderManagement.address, tokenId);
         await erc721.connect(maker).approve(exchange.address, tokenId);
 
         console.log("ERC721 owner is:", await erc721.ownerOf(tokenId));
@@ -98,7 +91,7 @@ describe("Dex", function () {
         // Order maker call registerNFT
         // await nftRouter.connect(maker).registerNFT(erc721.address, tokenId, erc20.address);
         // Create order
-        await orderManagement.connect(maker).createOrder(
+        await exchange.connect(maker).createOrder(
             erc721.address,
             erc20.address,
             tokenId,
@@ -115,13 +108,12 @@ describe("Dex", function () {
         const balanceAfterTransfer = await erc20.balanceOf(taker.address);
         console.log("ERC20 balance of taker after transfer:", balanceAfterTransfer.toString());
 
-        // Approve OrderManagement to spend tokens for the taker
-        // await erc20.connect(taker).approve(orderManagement.address, price);
+        // Approve Exchange to spend tokens for the taker
         await erc20.connect(taker).approve(exchange.address, price);
 
         // Fill order
         console.log("Filling order...");
-        // await orderManagement.connect(taker).fillOrder(0);
+
         await exchange.connect(taker).fillOrder(0);
 
         const balanceAfterFillTaker = await erc20.balanceOf(taker.address);
@@ -166,7 +158,7 @@ describe("Dex", function () {
         const signature = await maker.signMessage(message);
 
         // Similar to previous test, but now we use weth as the token address to signify WEther
-        await orderManagement.connect(maker).createOrder(
+        await exchange.connect(maker).createOrder(
             erc721.address,
             weth9.address,
             tokenId,

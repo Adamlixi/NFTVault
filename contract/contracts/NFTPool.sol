@@ -150,7 +150,7 @@ contract NFTPool is INFTPool {
         IERC721(nft).approve(address(auction), tokenId);
         IERC721(nft).safeTransferFrom(address(this), address(auction), tokenId);
         // starting price should be the same as current nftaccount
-        auction.createAuction(nft, tokenId, nftAccount[nft][tokenId] + nftRedeemAccount[nft][tokenId]);
+        auction.createAuction(nft, tokenId, nftAccount[nft][tokenId]);
         
         // Update the state of the NFT
         nftState[nft][tokenId] = -1;  // -1 could mean that it's in auction
