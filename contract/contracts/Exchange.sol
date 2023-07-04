@@ -27,6 +27,9 @@ contract Exchange {
     NFTRouter public nftRouter;
     IWETH public weth;
     mapping(uint256 => Order) public orderBook;
+    mapping(address => uint256[]) public ordersByUser;
+    uint256[] public openOrders;
+    mapping(uint256 => uint256) public openOrdersIndex;
     uint256 public orderCount = 0;
 
     event OrderCreated(uint256 orderId);
@@ -85,6 +88,9 @@ contract Exchange {
             Status.Open
         );
         orderBook[orderCount] = newOrder;
+        ordersByUser[msg.sender].push(orderCount);
+        openOrders.push(orderCount);
+        openOrdersIndex[orderCount] = openOrders.length - 1;
 
         emit OrderCreated(orderCount);
         orderCount++;
@@ -157,11 +163,21 @@ contract Exchange {
             order.tokenId
         );
 
+        _removeOpenOrder(orderId);
         // Update the order status.
         order.status = Status.Filled;
 
         emit OrderFilled(orderId, msg.sender);
     }
+
+    function _removeOpenOrder(uint256 orderId) internal {
+        uint256 index = openOrdersIndex[orderId];
+        openOrders[index] = openOrders[openOrders.length - 1];
+        openOrdersIndex[openOrders[openOrders.length - 1]] = index;
+        openOrders.pop();
+        delete openOrdersIndex[orderId];
+    }
+
 
     function cancelOrder(uint256 orderId) public {
         Order memory order = getOrder(orderId);
@@ -208,7 +224,7 @@ contract Exchange {
 
         // Unwrap the remaining WETH back to ETH, which should be zero as it's all been used in transferIntoNFT
         // weth.withdraw(nftAccountAmount);
-
+        _removeOpenOrder(orderId);
         order.status = Status.Filled;
         emit OrderFilled(orderId, msg.sender);
     }
@@ -245,4 +261,24 @@ contract Exchange {
             order.status
         );
     }
+
+    // all open orders lookup
+    function getAllOpenOrders() public view returns (Order[] memory) {
+        Order[] memory orders = new Order[](openOrders.length);
+        for (uint i = 0; i < openOrders.length; i++) {
+            orders[i] = orderBook[openOrders[i]];
+        }
+        return orders;
+    }
+
+    // return every order created by a user
+    function getUserOrders(address user) public view returns (Order[] memory) {
+        uint256[] memory userOrderIds = ordersByUser[user];
+        Order[] memory orders = new Order[](userOrderIds.length);
+        for (uint i = 0; i < userOrderIds.length; i++) {
+            orders[i] = orderBook[userOrderIds[i]];
+        }
+        return orders;
+    }
+
 }
