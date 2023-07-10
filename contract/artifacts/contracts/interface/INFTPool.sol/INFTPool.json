@@ -123,6 +123,16 @@
           "internalType": "address",
           "name": "_bank",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_auction",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "nftVault",
+          "type": "address"
         }
       ],
       "name": "initialize",
