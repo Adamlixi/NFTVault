@@ -100,14 +100,6 @@ describe("Dex", function () {
             signature
         );
 
-        // check getallOpenOrders and get UserOrders
-        const orders = await exchange.getAllOpenOrders();
-
-        console.log("Open orders:", orders);
-
-        const userOrders = await exchange.getUserOrders(maker.address);
-        // Log or validate the orders
-        console.log("User's orders:", userOrders);
 
         // Transfer ERC20 tokens from the initial owner to the taker
         const initialSupply = await erc20.balanceOf(owner.address);
