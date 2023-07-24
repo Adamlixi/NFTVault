@@ -7,7 +7,7 @@ import "./NFTRouter.sol";
 import "./interface/IWETH.sol";
 
 contract Exchange {
-        enum Status {
+    enum Status {
         Open,
         Filled,
         Cancelled
@@ -117,10 +117,8 @@ contract Exchange {
 
     function fillOrder(uint256 orderId) public {
         Order memory order = getOrder(orderId);
-        require(
-            order.status == Status.Open,
-            "Order is not open"
-        );
+        require(order.status == Status.Open,  "Order is not open");
+        require(order.expiration >= block.timestamp, "Order expired");
 
         uint256 sellerAmount = (order.price * 97) / 100;
         uint256 nftAccountAmount = order.price - sellerAmount;
@@ -159,7 +157,7 @@ contract Exchange {
         );
 
         // Update the order status.
-        order.status = Status.Filled;
+        orderBook[orderId].status = Status.Filled;
 
         emit OrderFilled(orderId, msg.sender);
     }
@@ -174,17 +172,15 @@ contract Exchange {
             "Order is not open"
         );
 
-        order.status = Status.Cancelled;
+        orderBook[orderId].status = Status.Cancelled;
 
         emit OrderCanceled(orderId);
     }
 
     function fillOrderWithEther(uint256 orderId) public payable {
         Order memory order = getOrder(orderId);
-        require(
-            order.status == Status.Open,
-            "Order is not open"
-        );
+        require(order.status == Status.Open, "Order is not open");
+        require(order.expiration >= block.timestamp, "Order expired");
         require(msg.value == order.price, "Incorrect ETH value sent");
 
         uint256 sellerAmount = (order.price * 97) / 100;
@@ -211,7 +207,7 @@ contract Exchange {
 
         // Unwrap the remaining WETH back to ETH, which should be zero as it's all been used in transferIntoNFT
         // weth.withdraw(nftAccountAmount);
-        order.status = Status.Filled;
+        orderBook[orderId].status = Status.Filled;
         emit OrderFilled(orderId, msg.sender);
     }
 
