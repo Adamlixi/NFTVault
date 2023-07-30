@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+
+</head>
+
+<body>
+    <h1 id="title"></h1>
+
+    <input type="text" id="toAccount">
+    <button id="send" onclick="connectWallet()">send</button>
+    <script>
+        // const connectWallet = async() => {
+        //     if(typeof window != "undefined" && typeof window.ethereum != "undefined"){
+        //         try{
+        //             const accounts = await window.ethereum.request({methods: "eth_requestAccounts"});
+        //             console.log(accounts[0]);
+        //         }
+        //         catch(err){
+        //             console.error(err.message);
+        //         }
+        //     }
+        //     else{
+        //         console.log("please install MetaMask");
+        //     }
+        // }
+        var web3 = new Web3(Web3.givenProvider || "HTTP://localhost:7545");
+        console.log(web3)
+
+        web3.eth.getBlockNumber().then(res => {
+            console.log(res)
+        })
+
+        web3.eth.getChainId().then(res => {
+            console.log(res)
+        });
+
+        //获取某个账号的余额
+
+        web3.eth.getBalance("0xa382a1F43a0258a38017C7D1cc73abA328416e75").then(res => {
+            console.log(web3.utils.fromWei(res, "ether"))
+        })
+        // const acc1 = "0xa382a1F43a0258a38017C7D1cc73abA328416e75";
+        // const acc2 = "0x2100B422c659eCF4b1bC48Db7e55BcFf1a4372d7";
+
+        // web3.eth.sendTransaction({
+        //         from: acc1,
+        //         to: acc2,
+        //         value: web3.utils.toWei("1", "ether")
+        //     })
+        //     .then(function (receipt) {
+        //        console.log("转完了")
+        // });
+
+        // 先授权
+        // web3.eth.requestAccounts().then(res=>{
+        //     console.log("授权",res)
+
+        //     title.innerHTML = res[0]
+        // });
+        if (typeof window.ethereum !== 'undefined') {
+  window.ethereum.request({ method: 'eth_requestAccounts' })
+    .then((res) => {
+      console.log("授权", res);
+      document.getElementById("title").innerHTML = res[0];
+    })
+    .catch((error) => {
+      console.error(error);
+    });
+} else {
+  console.error("未检测到以太坊提供者");
+}
+
+        // send.onclick = function(){
+        //     web3.eth.sendTransaction({
+        //             from: title.innerHTML,
+        //             to: toAccount.value,
+        //             value: web3.utils.toWei("1", "ether")
+        //         })
+        //         .then(function (receipt) {
+        //         console.log("转完了")
+        //     });
+        // }
+        // 获取账号
+        web3.eth.getAccounts()
+            .then(res=>{
+                console.log(res)
+            });
+    </script>
+</body>
+
+</html>
